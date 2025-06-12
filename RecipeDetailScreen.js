@@ -23,7 +23,6 @@ export default function RecipeDetailScreen({ route }) {
       try {
         const response = await fetch(`${API_BASE_URL}/get-recipe/${id}`);
         const data = await response.json();
-
         if (response.ok) {
           setRecipe(data);
         } else {
@@ -35,26 +34,39 @@ export default function RecipeDetailScreen({ route }) {
         setLoading(false);
       }
     };
-
     fetchRecipeDetails();
   }, [id]);
 
   if (loading) return <ActivityIndicator style={{ flex: 1 }} size="large" />;
   if (!recipe) return <Text>No recipe data found.</Text>;
 
+  const raw = recipe.instructions?.replace(/<[^>]*>/g, '') || '';
+  const withBreaks = raw.replace(/(\d+\.)/g, '\n$1');
+  const steps = withBreaks
+    .split('\n')
+    .map(s => s.trim())
+    .filter(s => s.length > 0);
+ 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         <Text style={styles.title}>{recipe.title}</Text>
         <Image source={{ uri: recipe.image }} style={styles.image} />
 
         <Text style={styles.section}>Ingredients:</Text>
-        {recipe.extendedIngredients?.map((ing, index) => (
-          <Text key={index}>• {ing.original}</Text>
+        {recipe.extendedIngredients?.map((ing, i) => (
+          <Text key={i}>• {ing.original}</Text>
         ))}
 
         <Text style={styles.section}>Instructions:</Text>
-        <Text>{recipe.instructions?.replace(/<[^>]*>/g, '') || 'No instructions provided.'}</Text>
+        {steps.map((step, i) => (
+          <Text key={i} style={styles.step}>
+            {step}
+          </Text>
+        ))}
       </ScrollView>
     </SafeAreaView>
   );
@@ -87,5 +99,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginTop: 20,
     marginBottom: 5,
+  },
+  step: {
+    marginBottom: 8,
+    lineHeight: 20,
   },
 });
