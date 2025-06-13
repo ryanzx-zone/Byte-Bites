@@ -112,6 +112,13 @@ const handleUploadPost = async () => {
                 <Text style={styles.heading}>Snap & Share</Text>
             </View>
 
+            <TouchableOpacity
+              style={styles.galleryButton}
+              onPress={() => navigation.navigate("Gallery")}
+            >
+            <Text style={styles.galleryButtonText}>Gallery</Text>
+            </TouchableOpacity>
+
             {imageUri && (
                 <Image source={{ uri: imageUri }} style={styles.previewImage} />
             )}
@@ -189,6 +196,21 @@ const styles = StyleSheet.create({
         fontSize: 26,
         fontWeight: 'bold',
         color: '#fff',
+    },
+    galleryButton: {
+        position: "absolute",
+        right: width * 0.04,
+        bottom: height * 0.005,
+        backgroundColor: "#fff",
+        paddingHorizontal: width * 0.03,
+        paddingVertical: height * 0.01,
+        borderRadius: 10,
+        elevation: 3,
+    },
+    galleryButtonText: {
+        fontSize: 16,
+        fontWeight: "bold",
+        color: "#eb11ee",
     },
     secondContainer: {
         marginTop: height * 0.025,
