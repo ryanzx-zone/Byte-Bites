@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { StyleSheet, View, Image, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, SafeAreaView, Dimensions } from "react-native";
 import { db } from '../config/FirebaseConfig';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import * as ImageManipulator from 'expo-image-manipulator';
+
 
 const { width, height } = Dimensions.get('window');
 
@@ -22,88 +24,114 @@ function Snapsharescreen({ navigation, route }) {
     };
 
     const compressImageCanvas = (imageUri, quality = 0.7, maxWidth = 800, maxHeight = 600) => {
-    return new Promise((resolve, reject) => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        const img = new Image();
+        return new Promise((resolve, reject) => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
 
-        img.onload = () => {
-            let { width, height } = img;
+            img.onload = () => {
+                let { width, height } = img;
 
-            if (width > height && width > maxWidth) {
-                height = (height * maxWidth) / width;
-                width = maxWidth;
-            } else if (height > maxHeight) {
-                width = (width * maxHeight) / height;
-                height = maxHeight;
-            }
+                if (width > height && width > maxWidth) {
+                    height = (height * maxWidth) / width;
+                    width = maxWidth;
+                } else if (height > maxHeight) {
+                    width = (width * maxHeight) / height;
+                    height = maxHeight;
+                }
 
-            canvas.width = width;
-            canvas.height = height;
-            ctx.drawImage(img, 0, 0, width, height);
+                canvas.width = width;
+                canvas.height = height;
+                ctx.drawImage(img, 0, 0, width, height);
 
-            resolve(canvas.toDataURL('image/jpeg', quality));
-        };
+                resolve(canvas.toDataURL('image/jpeg', quality));
+            };
 
-        img.onerror = () => reject(new Error('Failed to load image'));
-        img.src = imageUri;
-    });
-};
+            img.onerror = () => reject(new Error('Failed to load image'));
+            img.src = imageUri;
+        });
+    };
 
-const handleUploadPost = async () => {
-    if (!imageUri || !title.trim() || !caption.trim()) {
-        Alert.alert('Error', 'Please fill in all fields and take a picture!');
-        return;
-    }
-
-    setIsUploading(true);
-
-    try {
-        const response = await fetch(imageUri);
-        const blob = await response.blob();
-
-        if (blob.size > 1500000) {
-            Alert.alert('Image Too Large', 'Please take another image. The current image is too large to upload.', [
-                { text: 'OK' }
-            ]);
+    const handleUploadPost = async () => {
+        if (!imageUri || !title.trim() || !caption.trim()) {
+            console.log("[Upload] Missing fields — imageUri:", imageUri, "title:", title, "caption:", caption);
+            Alert.alert('Error', 'Please fill in all fields and take a picture!');
             return;
         }
 
-        let base64 = await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result);
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-        });
+        console.log("[Upload] Starting upload...");
+        setIsUploading(true);
 
-        let base64Size = base64.length * 0.75;
+        try {
+            console.log('[Upload] Compressing image...');
+            const compressed = await ImageManipulator.manipulateAsync(
+                imageUri,
+                [{ resize: { width: 800 } }],
+                { compress: 0.6, format: ImageManipulator.SaveFormat.JPEG }
+            );
+            console.log('[Upload] Compression done. URI:', compressed.uri);
 
-        const postData = {
-            title: title.trim(),
-            caption: caption.trim(),
-            imageBase64: base64,
-            createdAt: serverTimestamp(),
-            timestamp: Date.now(),
-        };
+            const response = await fetch(compressed.uri);
+            console.log('[Upload] Fetching image URI:', compressed.uri);
+            const blob = await response.blob();
 
-        await addDoc(collection(db, 'posts'), postData);
+            console.log('[Upload] Blob obtained. Size:', blob.size);
 
-        Alert.alert('Success!', 'Your post has been uploaded successfully!', [
-            {
-                text: 'OK',
-                onPress: () => {
-                    setTitle('');
-                    setCaption('');
-                    setImageUri(null);
-                }
+            if (blob.size > 1500000) {
+                console.log("[Upload] Blob too large:", blob.size);
+                Alert.alert('Image Too Large', 'Please take another image. The current image is too large to upload.');
+                return;
             }
-        ]);
-    } catch (error) {
-        Alert.alert('Upload Error', 'Failed to upload post. Please try again.');
-    } finally {
-        setIsUploading(false);
-    }
-};
+
+            console.log("[Upload] Converting blob to base64...");
+            let base64 = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    console.log("[Upload] Base64 conversion success");
+                    resolve(reader.result);
+                };
+                reader.onerror = (e) => {
+                    console.error("[Upload] Base64 conversion failed:", e);
+                    reject(e);
+                };
+                reader.readAsDataURL(blob);
+            });
+
+            let base64Size = base64.length * 0.75;
+            console.log("[Upload] Base64 approx size:", base64Size);
+
+            const postData = {
+                title: title.trim(),
+                caption: caption.trim(),
+                imageBase64: base64,
+                createdAt: serverTimestamp(),
+                timestamp: Date.now(),
+            };
+
+            console.log("[Upload] Uploading to Firestore...");
+            await addDoc(collection(db, 'posts'), postData);
+            console.log("[Upload] Firestore upload successful");
+
+            Alert.alert('Success!', 'Your post has been uploaded successfully!', [
+                {
+                    text: 'OK',
+                    onPress: () => {
+                        setTitle('');
+                        setCaption('');
+                        setImageUri(null);
+                        console.log("[Upload] Form reset");
+                    }
+                }
+            ]);
+        } catch (error) {
+            console.error("[Upload] Caught error during upload:", error);
+            Alert.alert('Upload Error', 'Failed to upload post. Please try again.');
+        } finally {
+            setIsUploading(false);
+            console.log("[Upload] Upload finished");
+        }
+    };
+
 
 
     return (
@@ -150,24 +178,24 @@ const handleUploadPost = async () => {
 
             <TouchableOpacity onPress={handleUploadPost} disabled={isUploading || !imageUri}>
                 <View style={[
-                    styles.secondBox, 
+                    styles.secondBox,
                     (isUploading || !imageUri) && styles.disabledBox
                 ]}>
                     <View style={styles.iconRow}>
                         {isUploading ? (
                             <>
-                              <ActivityIndicator size="small" color="#000" style={{ marginRight: 10 }} />
-                              <Text style={styles.actionText}>Uploading...</Text>
+                                <ActivityIndicator size="small" color="#000" style={{ marginRight: 10 }} />
+                                <Text style={styles.actionText}>Uploading...</Text>
                             </>
                         ) : (
                             <>
-                              <Text style={styles.actionText}>Upload Post</Text>
-                              <Image source={require('../../assets/share-icon.png')} style={styles.iconImage} />
+                                <Text style={styles.actionText}>Upload Post</Text>
+                                <Image source={require('../../assets/share-icon.png')} style={styles.iconImage} />
                             </>
                         )}
                     </View>
                 </View>
-            </TouchableOpacity>        
+            </TouchableOpacity>
         </SafeAreaView>
     );
 }
