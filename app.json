@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "KitchenGPT",
+    "slug": "KitchenGPT",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/Byte-bites-logo.jpg",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.ryanzzzx.KitchenGPT"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "900e0456-a08b-4969-bb8b-0e4106dcef9d"
+      }
+    },
+    "owner": "ryanzzzx"
+  }
+}
