@@ -11,7 +11,7 @@ function Mywelcomescreen({ navigation }) {
       if (name.trim()) {
         navigation.navigate('Welcome', { userName: name });  
       } else {
-        alert("Please enter your name.");
+        alert("Please enter your username.");
       }
     };
 
@@ -20,12 +20,12 @@ function Mywelcomescreen({ navigation }) {
       <View style={styles.container}>
         <View style={styles.logoContainer}>
           <Image style={styles.logo}
-                source={require('../../assets/Byte-bites-logo.jpg')}/>
+                source={require('../assets/bytebitesclearlogo.png')}/>
           <Text style={styles.heading}>Welcome to KitchenGPT! </Text>
         </View>
 
         <View style={styles.centeredTextContainer}>
-          <Text style={styles.italicText}>Enter Your Username</Text>
+          
             <View style={styles.inputRow}>
               <TextInput
                 style={styles.textInput}
@@ -36,8 +36,8 @@ function Mywelcomescreen({ navigation }) {
               />
             <View style={styles.buttonContainer}>
               <Button
-                color="#2fe6fc"
-                title="Login ->"  
+                color="#ba64f9"
+                title="Get Started -->"  
                 onPress={handleLogin}
               />
             </View>
@@ -53,7 +53,7 @@ function Mywelcomescreen({ navigation }) {
 const styles = StyleSheet.create({
     safeArea: {
       flex: 1,
-      backgroundColor: '#8000ff',
+      backgroundColor: '#cc0fb5',
     },
     container: {
       flex: 1,
@@ -62,15 +62,15 @@ const styles = StyleSheet.create({
     },
     heading: {
       fontSize: 28,          
-      fontWeight: 'bold',    
+      fontWeight: 'bold',  
     },
     italicText: {
       fontSize: 24,
       fontStyle: 'italic',    
     },
     logo:{
-      width: width * 0.5,
-      height: width * 0.5,
+      width: width * 0.75,
+      height: width * 0.75,
     },
     logoContainer:{
       position: 'absolute',
