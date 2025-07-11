@@ -5,13 +5,18 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Mywelcomescreen from './app/screens/Mywelcomescreen';
 import MyViewImageScreen from './app/screens/MyViewImageScreen';
+//import MyRecipeSearch from './app/screens/MyRecipeSearch';
+//import BackupHomescreen from './app/screens/BackupHomescreen';
 import Timerscreen from './app/screens/Timerscreen';
 import Snapsharescreen from './app/screens/Snapsharescreen';
 import CameraScreen from './app/screens/CameraScreen';
+//import Loginscreen from './app/screens/Loginscreen';
 import GalleryScreen from './app/screens/GalleryScreen';
 import PRecipeSearch from './app/screens/PRecipeSearch';
 import RecipeDetailScreen from './app/screens/RecipeDetailScreen';
 import PLoginScreen from './app/screens/PLoginScreen';
+import Mealplanner from './app/screens/Mealplanner';
+import CalorieTracker from './app/screens/CalorieTracker';
 import { app } from './app/config/FirebaseConfig';
 import { getAuth } from 'firebase/auth';
 
@@ -43,6 +48,16 @@ export default function App() {
   }
 
   return (
+    //<Mywelcomescreen />
+    //<MyViewImageScreen />
+    //<MyRecipeSearch />
+    //<BackupHomescreen />
+    //<Timerscreen />
+    //<Snapsharescreen />
+    //<CameraScreen />
+    //<Loginscreen />
+    //<GalleryScreen />
+    //<Mealplanner />
 
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Login">
@@ -91,9 +106,20 @@ export default function App() {
           component={GalleryScreen}
           options={{ headerShown: false }}
         />
+        <Stack.Screen
+          name="MP"
+          component={Mealplanner}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="CT"
+          component={CalorieTracker}
+          options={{ headerShown: false }}
+        />
       </Stack.Navigator>
     </NavigationContainer>
 
+      
   );
 }
 
@@ -101,5 +127,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+    //alignItems: 'center',
+    //justifyContent: 'center',
   },
 });
