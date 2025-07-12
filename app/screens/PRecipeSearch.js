@@ -1,11 +1,23 @@
 import React, { useState } from "react";
-import { StyleSheet, View, Image, Text, TextInput, TouchableOpacity, FlatList, Dimensions, Button, Alert } from "react-native";
+import {
+  StyleSheet,
+  View,
+  Image,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  FlatList,
+  Dimensions,
+  Button,
+  Alert,
+} from "react-native";
 
-const { width, height } = Dimensions.get('window');
-const API_BASE_URL = 'http://192.168.1.15:5000';
+const { width, height } = Dimensions.get("window");
+const API_BASE_URL =
+  "https://ioh5g0e3ih.execute-api.ap-southeast-1.amazonaws.com/Prod";
 
 function PRecipeSearch({ navigation }) {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -24,7 +36,7 @@ function PRecipeSearch({ navigation }) {
 
   const fetchRecipes = async () => {
     if (!query.trim()) {
-      Alert.alert('Please enter a search term.');
+      Alert.alert("Please enter a search term.");
       return;
     }
 
@@ -33,12 +45,14 @@ function PRecipeSearch({ navigation }) {
     try {
       const queryParams = new URLSearchParams({ q: query });
 
-      if (cookTime) queryParams.append('cook_time', cookTime);
-      if (dietary.length > 0) queryParams.append('dietary', dietary.join(','));
-      if (cuisines.length > 0) queryParams.append('cuisines', cuisines.join(','));
+      if (cookTime) queryParams.append("cook_time", cookTime);
+      if (dietary.length > 0)
+        queryParams.append("dietary", dietary.join(","));
+      if (cuisines.length > 0)
+        queryParams.append("cuisines", cuisines.join(","));
 
       const fullUrl = `${API_BASE_URL}/recipes/search?${queryParams.toString()}`;
-      console.log('Fetching:', fullUrl);
+      console.log("Fetching:", fullUrl);
 
       const response = await fetch(fullUrl);
       const data = await response.json();
@@ -46,12 +60,14 @@ function PRecipeSearch({ navigation }) {
       if (response.ok) {
         setRecipes(data.results || []);
       } else {
-        console.error('Server error:', data);
-        Alert.alert('Error from server:', data.error || 'Unknown error');
+        console.error("Server error:", data);
+        Alert.alert("Error from server:", data.error || "Unknown error");
       }
     } catch (error) {
-      console.error('Network error:', error);
-      Alert.alert('Network request failed. Is Flask running at 10.0.2.2:5000?');
+      console.error("Network error:", error);
+      Alert.alert(
+        "Network request failed. Is Flask running at the correct URL?"
+      );
     } finally {
       setLoading(false);
     }
@@ -61,7 +77,10 @@ function PRecipeSearch({ navigation }) {
     <View style={styles.container}>
       <View style={styles.topContainer}>
         <Text style={styles.heading}>Recipe Search</Text>
-        <TouchableOpacity style={styles.timerButton} onPress={() => navigation.navigate('Timer')}>
+        <TouchableOpacity
+          style={styles.timerButton}
+          onPress={() => navigation.navigate("Timer")}
+        >
           <Text style={styles.timerButtonText}>Timer</Text>
         </TouchableOpacity>
       </View>
@@ -79,13 +98,25 @@ function PRecipeSearch({ navigation }) {
                     value={query}
                     onChangeText={(text) => setQuery(text)}
                   />
-                  <TouchableOpacity style={styles.iconContainer} onPress={fetchRecipes}>
-                    <Image style={styles.searchImage} source={require("../assets/search-icon.png")} />
+                  <TouchableOpacity
+                    style={styles.iconContainer}
+                    onPress={fetchRecipes}
+                  >
+                    <Image
+                      style={styles.searchImage}
+                      source={require("../../assets/search-icon.png")}
+                    />
                   </TouchableOpacity>
                 </View>
 
-                <TouchableOpacity style={styles.icon2Container} onPress={() => setShowFilters(!showFilters)}>
-                  <Image style={styles.image2} source={require("../assets/filter-icon.jpg")} />
+                <TouchableOpacity
+                  style={styles.icon2Container}
+                  onPress={() => setShowFilters(!showFilters)}
+                >
+                  <Image
+                    style={styles.image2}
+                    source={require("../../assets/filter-icon.jpg")}
+                  />
                 </TouchableOpacity>
               </View>
 
@@ -101,46 +132,83 @@ function PRecipeSearch({ navigation }) {
                       <Text style={styles.checkbox}>
                         {cookTime === t ? "☑" : "☐"}{" "}
                       </Text>
-                      <Text>{t === "<30" ? "Less than 30 mins" : t === "30-60" ? "30-60 mins" : "More than 1 hour"}</Text>
+                      <Text>
+                        {t === "<30"
+                          ? "Less than 30 mins"
+                          : t === "30-60"
+                          ? "30-60 mins"
+                          : "More than 1 hour"}
+                      </Text>
                     </TouchableOpacity>
                   ))}
 
                   <Text style={styles.filterHeading}>Dietary Preferences</Text>
-                  {["Vegan", "Vegetarian", "Gluten-free", "Keto", "Paleo", "Others"].map((diet) => (
+                  {[
+                    "Vegan",
+                    "Vegetarian",
+                    "Gluten-free",
+                    "Keto",
+                    "Paleo",
+                    "Others",
+                  ].map((diet) => (
                     <TouchableOpacity
                       key={diet}
                       style={styles.checkboxRow}
-                      onPress={() => toggleSelection(diet, setDietary, dietary)}
+                      onPress={() =>
+                        toggleSelection(diet, setDietary, dietary)
+                      }
                     >
-                      <Text style={styles.checkbox}>{dietary.includes(diet) ? "☑" : "☐"} </Text>
+                      <Text style={styles.checkbox}>
+                        {dietary.includes(diet) ? "☑" : "☐"}{" "}
+                      </Text>
                       <Text>{diet}</Text>
                     </TouchableOpacity>
                   ))}
 
                   <Text style={styles.filterHeading}>Cuisines</Text>
-                  {["Chinese", "Western", "Japanese", "Italian", "Mexican", "Others"].map((cuisine) => (
+                  {[
+                    "Chinese",
+                    "Western",
+                    "Japanese",
+                    "Italian",
+                    "Mexican",
+                    "Others",
+                  ].map((cuisine) => (
                     <TouchableOpacity
                       key={cuisine}
                       style={styles.checkboxRow}
-                      onPress={() => toggleSelection(cuisine, setCuisines, cuisines)}
+                      onPress={() =>
+                        toggleSelection(cuisine, setCuisines, cuisines)
+                      }
                     >
-                      <Text style={styles.checkbox}>{cuisines.includes(cuisine) ? "☑" : "☐"} </Text>
+                      <Text style={styles.checkbox}>
+                        {cuisines.includes(cuisine) ? "☑" : "☐"}{" "}
+                      </Text>
                       <Text>{cuisine}</Text>
                     </TouchableOpacity>
                   ))}
 
-                  <TouchableOpacity style={styles.filterSearchButton} onPress={fetchRecipes}>
-                    <Text style={styles.filterSearchBtnText}>Apply Filters & Search</Text>
+                  <TouchableOpacity
+                    style={styles.filterSearchButton}
+                    onPress={fetchRecipes}
+                  >
+                    <Text style={styles.filterSearchBtnText}>
+                      Apply Filters & Search
+                    </Text>
                   </TouchableOpacity>
                 </View>
               )}
             </View>
 
-            {loading && <Text style={{ textAlign: 'center', padding: 10 }}>Loading...</Text>}
+            {loading && (
+              <Text style={{ textAlign: "center", padding: 10 }}>
+                Loading...
+              </Text>
+            )}
           </>
         }
         data={recipes}
-        keyExtractor={item => item.id.toString()}
+        keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={{ paddingBottom: 40 }}
         renderItem={({ item }) => (
           <View style={styles.recipeItem}>
@@ -148,17 +216,21 @@ function PRecipeSearch({ navigation }) {
               <Image source={{ uri: item.image }} style={styles.image} />
               <View style={{ flexShrink: 1 }}>
                 <Text style={styles.recipeTitle}>{item.title}</Text>
-                <Text style={styles.calorieInfo}>
-                  Calories: {item.calories ? Math.round(item.calories) : "N/A"}
-                </Text>
+                {item.nutrition?.nutrients && (
+                  <Text style={styles.calorieInfo}>
+                    Calories:{" "}
+                    {item.nutrition.nutrients.find(
+                      (n) => n.name === "Calories"
+                    )?.amount?.toFixed(0) || "N/A"}
+                  </Text>
+                )}
               </View>
             </View>
             <View style={{ marginTop: 10 }}>
               <Button
                 title="View Recipe"
                 onPress={() => {
-                  console.log('BUTTON CLICKED:', item.id);
-                  navigation.navigate('RecipeDetail', { id: item.id });
+                  navigation.navigate("RecipeDetail", { id: item.id });
                 }}
               />
             </View>
@@ -189,10 +261,10 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   timerButton: {
-    position: 'absolute',
+    position: "absolute",
     right: width * 0.04,
     bottom: height * 0.005,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     paddingHorizontal: width * 0.03,
     paddingVertical: height * 0.01,
     borderRadius: 10,
@@ -200,8 +272,8 @@ const styles = StyleSheet.create({
   },
   timerButtonText: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#eb11ee',
+    fontWeight: "bold",
+    color: "#eb11ee",
   },
   secondContainer: {
     marginTop: width * 0.05,
@@ -282,17 +354,17 @@ const styles = StyleSheet.create({
     padding: width * 0.03,
     borderRadius: 8,
     elevation: 3,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.5,
     shadowRadius: 4,
     width: width * 0.95,
-    alignSelf: 'center',
-    backgroundColor: '#fff',
+    alignSelf: "center",
+    backgroundColor: "#fff",
   },
   contentRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   image: {
     width: width * 0.2,
@@ -312,3 +384,4 @@ const styles = StyleSheet.create({
 });
 
 export default PRecipeSearch;
+
