@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { StyleSheet, View, Image, Text, TextInput, TouchableOpacity, FlatList, Dimensions, Button, Alert } from "react-native";
 
 const { width, height } = Dimensions.get('window');
-const API_BASE_URL = 'https://ioh5g0e3ih.execute-api.ap-southeast-1.amazonaws.com/Prod';
+const API_BASE_URL = 'http://192.168.1.15:5000';
 
 function PRecipeSearch({ navigation }) {
   const [query, setQuery] = useState('');
@@ -51,7 +51,7 @@ function PRecipeSearch({ navigation }) {
       }
     } catch (error) {
       console.error('Network error:', error);
-      Alert.alert('Network request failed. Is Flask running at https://ioh5g0e3ih.execute-api.ap-southeast-1.amazonaws.com/Prod?');
+      Alert.alert('Network request failed. Is Flask running at 10.0.2.2:5000?');
     } finally {
       setLoading(false);
     }
@@ -80,12 +80,12 @@ function PRecipeSearch({ navigation }) {
                     onChangeText={(text) => setQuery(text)}
                   />
                   <TouchableOpacity style={styles.iconContainer} onPress={fetchRecipes}>
-                    <Image style={styles.searchImage} source={require("../../assets/search-icon.png")} />
+                    <Image style={styles.searchImage} source={require("../assets/search-icon.png")} />
                   </TouchableOpacity>
                 </View>
 
                 <TouchableOpacity style={styles.icon2Container} onPress={() => setShowFilters(!showFilters)}>
-                  <Image style={styles.image2} source={require("../../assets/filter-icon.jpg")} />
+                  <Image style={styles.image2} source={require("../assets/filter-icon.jpg")} />
                 </TouchableOpacity>
               </View>
 
@@ -146,7 +146,12 @@ function PRecipeSearch({ navigation }) {
           <View style={styles.recipeItem}>
             <View style={styles.contentRow}>
               <Image source={{ uri: item.image }} style={styles.image} />
-              <Text style={styles.recipeTitle}>{item.title}</Text>
+              <View style={{ flexShrink: 1 }}>
+                <Text style={styles.recipeTitle}>{item.title}</Text>
+                <Text style={styles.calorieInfo}>
+                  Calories: {item.calories ? Math.round(item.calories) : "N/A"}
+                </Text>
+              </View>
             </View>
             <View style={{ marginTop: 10 }}>
               <Button
@@ -298,6 +303,11 @@ const styles = StyleSheet.create({
   recipeTitle: {
     fontSize: 16,
     flexShrink: 1,
+  },
+  calorieInfo: {
+    fontSize: 14,
+    color: "#555",
+    marginTop: height * 0.01,
   },
 });
 
