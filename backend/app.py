@@ -1,87 +1,89 @@
+import os, logging, traceback
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import requests
-import os
-from dotenv import load_dotenv
+from aws_lambda_wsgi import response
 
-# Load API key from .env file
-load_dotenv()
+# structured logging
+logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
+log = logging.getLogger(__name__)
 
+# Flask app setup
 app = Flask(__name__)
 CORS(app)
 
-SPOONACULAR_API_KEY = os.getenv("SPOONACULAR_API_KEY")
+# env var check
+SPOONACULAR_API_KEY = os.environ.get("SPOONACULAR_API_KEY")
+if not SPOONACULAR_API_KEY:
+    log.error("SPOONACULAR_API_KEY missing")
+    raise RuntimeError("SPOONACULAR_API_KEY missing — check template.yaml")
 
-@app.route('/')
+@app.route("/")
 def home():
     return "Flask server is running!"
 
-@app.route('/recipes/search', methods=['GET'])
+@app.route("/recipes/search", methods=["GET"])
 def search_recipes():
-    query = request.args.get('q')
-    cook_time = request.args.get('cook_time')       
-    dietary = request.args.get('dietary')            
-    cuisines = request.args.get('cuisines')           
+    q = request.args.get("q")
+    if not q:
+        return jsonify(error="Missing search query"), 400
 
-    if not query:
-        return jsonify({'error': 'Missing search query'}), 400
-
-    url = "https://api.spoonacular.com/recipes/complexSearch"
     params = {
-        "query": query,
+        "query": q,
         "number": 10,
         "apiKey": SPOONACULAR_API_KEY,
         "addRecipeInformation": True,
-        "addRecipeNutrition": True  # added
+        "addRecipeNutrition": True  # INCLUDE nutrition info
     }
 
-    if cook_time == "<30":
+    cook = request.args.get("cook_time")
+    if cook == "<30":
         params["maxReadyTime"] = 30
-    elif cook_time == "30-60":
-        params["minReadyTime"] = 30
-        params["maxReadyTime"] = 60
-    elif cook_time == ">60":
+    elif cook == "30-60":
+        params.update(minReadyTime=30, maxReadyTime=60)
+    elif cook == ">60":
         params["minReadyTime"] = 60
 
-    if dietary:
-        allowed_diets = ["vegan", "vegetarian", "gluten free", "keto", "paleo"]
-        diets = [d.strip().lower() for d in dietary.split(',') if d.strip().lower() in allowed_diets]
-        if diets:
-            params["diet"] = diets[0]
+    diet = request.args.get("dietary")
+    if diet:
+        allowed = {"vegan", "vegetarian", "gluten free", "keto", "paleo"}
+        picks = [d for d in map(str.strip, diet.lower().split(",")) if d in allowed]
+        if picks:
+            params["diet"] = picks[0]
 
-    if cuisines:
-        params["cuisine"] = cuisines  
+    cuisine = request.args.get("cuisines")
+    if cuisine:
+        params["cuisine"] = cuisine
 
+    log.info("→ Spoonacular GET complexSearch %s", params)
     try:
-        response = requests.get(url, params=params)
-        response.raise_for_status()
-        data = response.json()
+        r = requests.get(
+            "https://api.spoonacular.com/recipes/complexSearch",
+            params=params,
+            timeout=15
+        )
+        r.raise_for_status()
+        return jsonify(r.json())
+    except Exception as e:
+        log.error(traceback.format_exc())
+        return jsonify(error="Spoonacular request failed", detail=str(e)), 500
 
-        # Extract calories from nutrition info
-        for recipe in data.get("results", []):
-            nutrition = recipe.get("nutrition", {})
-            nutrients = nutrition.get("nutrients", [])
-            calories = next((n for n in nutrients if n["name"] == "Calories"), None)
-            recipe["calories"] = calories["amount"] if calories else None
-
-        return jsonify(data)
-    except requests.RequestException as e:
-        return jsonify({'error': 'Spoonacular request failed', 'details': str(e)}), 500
-
-@app.route('/get-recipe/<int:recipe_id>')
+@app.route("/get-recipe/<int:recipe_id>")
 def get_recipe(recipe_id):
-    if not SPOONACULAR_API_KEY:
-        return jsonify({'error': 'API key not configured'}), 500
-
     url = f"https://api.spoonacular.com/recipes/{recipe_id}/information"
-    params = {"apiKey": SPOONACULAR_API_KEY}
-
+    log.info("→ Spoonacular GET %s", url)
     try:
-        response = requests.get(url, params=params)
-        response.raise_for_status()
-        return jsonify(response.json())
-    except requests.RequestException as e:
-        return jsonify({'error': 'Failed to fetch recipe details', 'details': str(e)}), 500    
+        r = requests.get(url, params={"apiKey": SPOONACULAR_API_KEY, "includeNutrition": True}, timeout=15)
+        r.raise_for_status()
+        return jsonify(r.json())
+    except Exception as e:
+        log.error(traceback.format_exc())
+        return jsonify(error="Failed to fetch recipe details", detail=str(e)), 500
 
-if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+def handler(event, context):
+    return response(app, event, context)
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)
+
+
