@@ -33,7 +33,7 @@ def search_recipes():
         "number": 10,
         "apiKey": SPOONACULAR_API_KEY,
         "addRecipeInformation": True,
-        "addRecipeNutrition": True  # INCLUDE nutrition info
+        "addRecipeNutrition": True  
     }
 
     cook = request.args.get("cook_time")
