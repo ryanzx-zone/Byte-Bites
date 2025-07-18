@@ -1,18 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Text,
-  View,
-  Image,
-  ScrollView,
-  StyleSheet,
-  ActivityIndicator,
-  Alert,
-  Platform,
-  StatusBar,
-  SafeAreaView,
-  TouchableOpacity,
-  Dimensions,
-} from 'react-native';
+import {Text, View, Image, ScrollView, StyleSheet, ActivityIndicator, Alert, Platform, StatusBar, SafeAreaView, TouchableOpacity, Dimensions, } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
 const API_BASE_URL = 'https://ioh5g0e3ih.execute-api.ap-southeast-1.amazonaws.com/Prod';
@@ -21,6 +8,7 @@ export default function RecipeDetailScreen({ route, navigation }) {
   const { id } = route.params;
   const [recipe, setRecipe] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [expandedSteps, setExpandedSteps] = useState({});
 
   useEffect(() => {
     const fetchRecipeDetails = async () => {
@@ -43,6 +31,13 @@ export default function RecipeDetailScreen({ route, navigation }) {
     fetchRecipeDetails();
   }, [id]);
 
+  const toggleStep = (index) => {
+    setExpandedSteps((prev) => ({
+      ...prev,
+      [index]: !prev[index],
+    }));
+  };
+
   if (loading) return <ActivityIndicator style={{ flex: 1 }} size="large" />;
   if (!recipe) return <Text>No recipe data found.</Text>;
 
@@ -55,13 +50,15 @@ export default function RecipeDetailScreen({ route, navigation }) {
         <Text style={styles.title}>{recipe.title}</Text>
         <Image source={{ uri: recipe.image }} style={styles.image} />
 
-        <Text style={styles.section}>Ingredients:</Text>
+        <Text style={[styles.section, { marginTop: height * 0.03 }]}>Ingredients:</Text>
         {recipe.extendedIngredients?.map((ing, index) => (
-          <Text key={index}> {ing.original}</Text>
+          <Text key={index} style={styles.ingredientText}>
+            • {ing.original}
+          </Text>
         ))}
 
         <View style={styles.instructionRow}>
-          <Text style={styles.section}>Instructions:</Text>
+          <Text style={[styles.section, { marginTop: height * 0.04 }]}>Instructions:</Text>
           <TouchableOpacity
             style={styles.TimerButton}
             onPress={() => navigation.navigate('Timer')}
@@ -70,17 +67,55 @@ export default function RecipeDetailScreen({ route, navigation }) {
           </TouchableOpacity>
         </View>
 
-      {recipe.instructions
-      ?.replace(/<[^>]*>/g, '')  
-      .replace(/(\d+\.)/g, '')   
-      .split('. ')                
-      .map((sentence, index) => (
-      <Text key={index} style={styles.instructionText}>
-      {sentence.trim()}
-      {sentence.trim().endsWith('.') ? '' : '.'} 
-      </Text>
-      )) || <Text>No instructions provided.</Text>
-      }
+        {recipe.analyzedInstructions?.[0]?.steps?.length ? (
+          recipe.analyzedInstructions[0].steps.map((stepObj, index) => {
+            const fullText = `${index + 1}. ${stepObj.step}`;
+            const isExpanded = expandedSteps[index];
+            const truncated = fullText.length > 40 ? fullText.slice(0, 40).trim() + '...' : fullText;
+
+            return (
+              <View key={index} style={{ marginBottom: height * 0.015 }}>
+                <Text style={styles.instructionText}>
+                  {isExpanded ? fullText : truncated}
+                </Text>
+                {fullText.length > 40 && (
+                  <TouchableOpacity onPress={() => toggleStep(index)}>
+                    <Text style={styles.toggleText}>
+                      {isExpanded ? 'Show less' : 'Show more'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            );
+          })
+        ) : recipe.instructions ? (
+          recipe.instructions
+            .replace(/<[^>]*>/g, '') 
+            .split('. ')
+            .filter((sentence) => sentence.trim().length > 0)
+            .map((sentence, index) => {
+              const fullText = `${index + 1}. ${sentence.trim()}${ sentence.trim().endsWith('.') ? '' : '.' }`;
+              const isExpanded = expandedSteps[index];
+              const truncated = fullText.length > 40 ? fullText.slice(0, 40).trim() + '...' : fullText;
+
+              return (
+                <View key={index} style={{ marginBottom: height * 0.015 }}>
+                  <Text style={styles.instructionText}>
+                    {isExpanded ? fullText : truncated}
+                  </Text>
+                  {fullText.length > 40 && (
+                    <TouchableOpacity onPress={() => toggleStep(index)}>
+                      <Text style={styles.toggleText}>
+                        {isExpanded ? 'Show less' : 'Show more'}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              );
+            })
+        ) : (
+          <Text style={styles.instructionText}>No instructions provided.</Text>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -112,6 +147,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
+  ingredientText: {
+    fontSize: 15,
+    marginBottom: height * 0.005,
+    lineHeight: height * 0.03,
+  },
   instructionRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -132,8 +172,12 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   instructionText: {
-  fontSize: 15,
-  marginBottom: height * 0.01,
-  lineHeight: height * 0.03,
+    fontSize: 15,
+    lineHeight: height * 0.04,
+  },
+  toggleText: {
+    fontSize: 14,
+    marginTop: height * 0.02,
+    color: '#007BFF',
   },
 });
