@@ -10,7 +10,7 @@ const CalorieTracker = () => {
   const [loading, setLoading] = useState(true);
   const [totalCalories, setTotalCalories] = useState(null);
 
-  const week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday", ];
+  const week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday",];
   const meals = ["Breakfast", "Lunch", "Dinner"];
 
   const createEmptyCalorieData = () =>
