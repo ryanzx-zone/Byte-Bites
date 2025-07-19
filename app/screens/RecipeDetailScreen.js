@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {Text, View, Image, ScrollView, StyleSheet, ActivityIndicator, Alert, Platform, StatusBar, SafeAreaView, TouchableOpacity, Dimensions, } from 'react-native';
+import { Text, View, Image, ScrollView, StyleSheet, ActivityIndicator, Alert, Platform, StatusBar, SafeAreaView, TouchableOpacity, Dimensions, } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
 const API_BASE_URL = 'https://ioh5g0e3ih.execute-api.ap-southeast-1.amazonaws.com/Prod';
@@ -90,11 +90,11 @@ export default function RecipeDetailScreen({ route, navigation }) {
           })
         ) : recipe.instructions ? (
           recipe.instructions
-            .replace(/<[^>]*>/g, '') 
+            .replace(/<[^>]*>/g, '')
             .split('. ')
             .filter((sentence) => sentence.trim().length > 0)
             .map((sentence, index) => {
-              const fullText = `${index + 1}. ${sentence.trim()}${ sentence.trim().endsWith('.') ? '' : '.' }`;
+              const fullText = `${index + 1}. ${sentence.trim()}${sentence.trim().endsWith('.') ? '' : '.'}`;
               const isExpanded = expandedSteps[index];
               const truncated = fullText.length > 40 ? fullText.slice(0, 40).trim() + '...' : fullText;
 

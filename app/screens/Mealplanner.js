@@ -9,7 +9,7 @@ function Mealplanner({ navigation }) {
   const [mealPlan, setMealPlan] = useState({});
   const [loading, setLoading] = useState(true);
 
-  const week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday", ];
+  const week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday",];
   const meals = ["breakfast", "lunch", "dinner"];
 
   const createEmptyMealPlan = () =>
@@ -146,9 +146,9 @@ function Mealplanner({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: "#fff" 
+  container: {
+    flex: 1,
+    backgroundColor: "#fff"
   },
   topContainer: {
     width: "100%",
@@ -157,10 +157,10 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     backgroundColor: "#eb11ee",
   },
-  heading: { 
-    fontSize: 26, 
-    fontWeight: "bold", 
-    color: "#fff" 
+  heading: {
+    fontSize: 26,
+    fontWeight: "bold",
+    color: "#fff"
   },
   trackerButton: {
     position: "absolute",

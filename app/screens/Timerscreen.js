@@ -11,6 +11,7 @@ import {
   Vibration,
   Alert,
   TouchableOpacity,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { TimerPicker } from 'react-native-timer-picker';
 import LinearGradient from 'expo-linear-gradient';
@@ -21,7 +22,6 @@ const Timerscreen = () => {
   const [duration, setDuration] = useState(0);
   const [timeLeft, setTimeLeft] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
-
   const [reminderType, setReminderType] = useState(null);
   const [reminderInterval, setReminderInterval] = useState(null);
 
@@ -43,11 +43,17 @@ const Timerscreen = () => {
       Alert.alert("Time's up!", "Your timer has finished.", [{ text: 'OK' }]);
     }
 
-    return () => clearInterval(intervalRef.current);
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
   }, [isRunning, timeLeft]);
 
   useEffect(() => {
-    clearInterval(reminderRef.current);
+    if (reminderRef.current) {
+      clearInterval(reminderRef.current);
+    }
 
     if (isRunning && reminderType && reminderInterval) {
       reminderRef.current = setInterval(() => {
@@ -56,7 +62,11 @@ const Timerscreen = () => {
       }, reminderInterval * 1000);
     }
 
-    return () => clearInterval(reminderRef.current);
+    return () => {
+      if (reminderRef.current) {
+        clearInterval(reminderRef.current);
+      }
+    };
   }, [isRunning, reminderType, reminderInterval]);
 
   const handleStart = () => {
@@ -67,9 +77,18 @@ const Timerscreen = () => {
   };
 
   const handleStop = () => {
-    clearInterval(intervalRef.current);
-    clearInterval(reminderRef.current);
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+    if (reminderRef.current) {
+      clearInterval(reminderRef.current);
+    }
     setIsRunning(false);
+  };
+
+  const handleReset = () => {
+    handleStop();
+    setTimeLeft(duration);
   };
 
   const formatTime = (seconds) => {
@@ -78,7 +97,6 @@ const Timerscreen = () => {
     return `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
   };
 
-  // ⬇️ Toggle logic
   const handleReminderSelect = (type, interval) => {
     if (reminderType === type && reminderInterval === interval) {
       setReminderType(null);
@@ -89,182 +107,271 @@ const Timerscreen = () => {
     }
   };
 
-  const isActive = (type, interval) => {
+  const isReminderActive = (type, interval) => {
     return reminderType === type && reminderInterval === interval;
   };
 
+  const handleTimerChange = (value) => {
+    const totalSeconds = (value.minutes || 0) * 60 + (value.seconds || 0);
+    setDuration(totalSeconds);
+    if (!isRunning) {
+      setTimeLeft(totalSeconds);
+    }
+  };
+
+  const renderReminderButton = (type, interval, label) => (
+    <TouchableOpacity
+      onPress={() => handleReminderSelect(type, interval)}
+      style={[
+        styles.reminderButton,
+        isReminderActive(type, interval) && styles.activeReminderButton
+      ]}
+    >
+      <Text style={[
+        styles.reminderButtonText,
+        isReminderActive(type, interval) && styles.activeReminderButtonText
+      ]}>
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.topContainer}>
-        <Text style={styles.heading}>Timer</Text>
-      </View>
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoidingView}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.headerText}>Timer</Text>
+        </View>
 
-      <View style={styles.timecontainer}>
-        {/* Reminders */}
-        <View style={styles.reminderWrapper}>
-          <View style={styles.reminderLabelContainer}>
-            <Text style={styles.label}>Reminders:</Text>
+        {/* Main Content */}
+        <View style={styles.content}>
+          {/* Reminders Section */}
+          <View style={styles.remindersContainer}>
+            <Text style={styles.sectionTitle}>Reminders</Text>
+
+            <View style={styles.reminderTypeContainer}>
+              <Text style={styles.reminderTypeLabel}>Stir:</Text>
+              <View style={styles.reminderButtonsRow}>
+                {renderReminderButton('stir', 15, '15s')}
+                {renderReminderButton('stir', 30, '30s')}
+                {renderReminderButton('stir', 60, '60s')}
+              </View>
+            </View>
+
+            <View style={styles.reminderTypeContainer}>
+              <Text style={styles.reminderTypeLabel}>Flip:</Text>
+              <View style={styles.reminderButtonsRow}>
+                {renderReminderButton('flip', 15, '15s')}
+                {renderReminderButton('flip', 30, '30s')}
+                {renderReminderButton('flip', 60, '60s')}
+              </View>
+            </View>
           </View>
-          <View style={styles.reminderOptionsContainer}>
-            {/* Stir Options */}
-            <View style={styles.optionRow}>
-              <TouchableOpacity
-                onPress={() => handleReminderSelect('stir', 15)}
-                style={[styles.optionBtn, isActive('stir', 15) && styles.activeBtn]}
-              >
-                <Text>Stir (15s)</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => handleReminderSelect('stir', 30)}
-                style={[styles.optionBtn, isActive('stir', 30) && styles.activeBtn]}
-              >
-                <Text>Stir (30s)</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => handleReminderSelect('stir', 60)}
-                style={[styles.optionBtn, isActive('stir', 60) && styles.activeBtn]}
-              >
-                <Text>Stir (60s)</Text>
-              </TouchableOpacity>
-            </View>
 
-            {/* Flip Options */}
-            <View style={styles.optionRow}>
-              <TouchableOpacity
-                onPress={() => handleReminderSelect('flip', 15)}
-                style={[styles.optionBtn, isActive('flip', 15) && styles.activeBtn]}
-              >
-                <Text>Flip (15s)</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => handleReminderSelect('flip', 30)}
-                style={[styles.optionBtn, isActive('flip', 30) && styles.activeBtn]}
-              >
-                <Text>Flip (30s)</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => handleReminderSelect('flip', 60)}
-                style={[styles.optionBtn, isActive('flip', 60) && styles.activeBtn]}
-              >
-                <Text>Flip (60s)</Text>
-              </TouchableOpacity>
-            </View>
+          {/* Timer Picker */}
+          <View style={styles.timerPickerContainer}>
+            <TimerPicker
+              padWithNItems={3}
+              hideHours
+              minuteLabel="min"
+              secondLabel="sec"
+              onDurationChange={handleTimerChange}
+              LinearGradient={LinearGradient}
+              styles={{
+                theme: 'light',
+                pickerItem: { fontSize: 34 },
+                pickerLabel: { fontSize: 30, right: -20 },
+                pickerLabelContainer: { width: 60 },
+                pickerItemContainer: { width: 150 },
+              }}
+            />
           </View>
         </View>
 
-        {/* Timer Picker */}
-        <TimerPicker
-          padWithNItems={3}
-          hideHours
-          minuteLabel="min"
-          secondLabel="sec"
-          onDurationChange={(value) => {
-            const totalSeconds = (value.minutes || 0) * 60 + (value.seconds || 0);
-            setDuration(totalSeconds);
-            if (!isRunning) setTimeLeft(totalSeconds);
-          }}
-          LinearGradient={LinearGradient}
-          styles={{
-            theme: 'light',
-            pickerItem: { fontSize: 34 },
-            pickerLabel: { fontSize: 30, right: -20 },
-            pickerLabelContainer: { width: 60 },
-            pickerItemContainer: { width: 150 },
-          }}
-        />
-
         {/* Timer Display */}
-        <View style={styles.timerBox}>
+        <View style={styles.timerDisplay}>
           <Text style={styles.timerText}>{formatTime(timeLeft)}</Text>
         </View>
 
-        {/* Controls */}
-        <View style={styles.buttonContainer}>
-          <Button title="Start" onPress={handleStart} disabled={isRunning || duration === 0} />
-          <Button title="Stop" onPress={handleStop} disabled={!isRunning} />
+        {/* Control Buttons */}
+        <View style={styles.controlsContainer}>
+          <TouchableOpacity
+            style={[styles.controlButton, styles.startButton, (isRunning || duration === 0) && styles.disabledButton]}
+            onPress={handleStart}
+            disabled={isRunning || duration === 0}
+          >
+            <Text style={[styles.controlButtonText, (isRunning || duration === 0) && styles.disabledButtonText]}>
+              Start
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.controlButton, styles.stopButton, !isRunning && styles.disabledButton]}
+            onPress={handleStop}
+            disabled={!isRunning}
+          >
+            <Text style={[styles.controlButtonText, !isRunning && styles.disabledButtonText]}>
+              Stop
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.controlButton, styles.resetButton]}
+            onPress={handleReset}
+          >
+            <Text style={styles.controlButtonText}>Reset</Text>
+          </TouchableOpacity>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
 
-// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F1F1F1',
+    backgroundColor: '#F5F5F5',
   },
-  topContainer: {
-    width: '100%',
-    paddingHorizontal: width * 0.04,
-    height: height * 0.1,
-    justifyContent: 'flex-end',
+  header: {
     backgroundColor: '#eb11ee',
+    paddingHorizontal: width * 0.05,
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0,
+    paddingBottom: 20,
+    justifyContent: 'flex-end',
   },
-  heading: {
-    fontSize: 26,
+  headerText: {
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#FFFFFF',
   },
-  timecontainer: {
+  keyboardAvoidingView: {
     flex: 1,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: width * 0.05,
+    paddingTop: 20,
+  },
+  remindersContainer: {
+    marginBottom: 30,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 15,
+  },
+  reminderTypeContainer: {
+    marginBottom: 15,
+  },
+  reminderTypeLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#666',
+    marginBottom: 8,
+  },
+  reminderButtonsRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  reminderButton: {
+    backgroundColor: '#E0E0E0',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#D0D0D0',
+  },
+  activeReminderButton: {
+    backgroundColor: '#4CAF50',
+    borderColor: '#45A049',
+  },
+  reminderButtonText: {
+    fontSize: 14,
+    color: '#333',
+    fontWeight: '500',
+  },
+  activeReminderButtonText: {
+    color: '#FFFFFF',
+  },
+  timerPickerContainer: {
     alignItems: 'center',
-    paddingTop: height * 0.02,
+    marginBottom: 30,
   },
-  reminderWrapper: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: height * 0.01,
-    paddingHorizontal: width * 0.02,
-    width: '100%',
-  },
-  reminderLabelContainer: {
-    width: width * 0.25,
-    justifyContent: 'flex-start',
-  },
-  reminderOptionsContainer: {
-    flex: 1,
-  },
-  optionRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: width * 0.025,
-    marginBottom: height * 0.01,
-  },
-  optionBtn: {
-    backgroundColor: '#ccc',
-    paddingVertical: height * 0.0075,
-    paddingHorizontal: width * 0.025,
-    borderRadius: 8,
-  },
-  activeBtn: {
-    backgroundColor: '#91e091',
-  },
-  label: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  timerBox: {
-    marginVertical: height * 0.03,
-    padding: height * 0.015,
-    borderWidth: 3,
-    borderColor: '#000',
-    borderRadius: 30,
-    backgroundColor: '#fff',
+  timerDisplay: {
+    alignItems: 'center',
+    marginBottom: 0,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingVertical: 25,
+    paddingHorizontal: 15,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
   },
   timerText: {
-    fontSize: 110,
-    marginVertical: height * 0.05,
-    color: '#000',
+    fontSize: 60,
+    fontWeight: 'bold',
+    color: '#333',
+    fontFamily: Platform.OS === 'ios' ? 'Helvetica Neue' : 'Roboto',
+    lineHeight: 70,
   },
-  buttonContainer: {
-    position: 'absolute',
-    bottom: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 40 : 40,
-    left: 0,
-    right: 0,
+  controlsContainer: {
     flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingTop: 10,
+    paddingBottom: 20,
+  },
+  controlButton: {
+    paddingVertical: 18,
+    paddingHorizontal: 25,
+    borderRadius: 25,
+    minWidth: 70,
+    minHeight: 50,
+    alignItems: 'center',
     justifyContent: 'center',
-    gap: width * 0.08,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  startButton: {
+    backgroundColor: '#4CAF50',
+    marginBottom: 30,
+  },
+  stopButton: {
+    backgroundColor: '#F44336',
+    marginBottom: 30,
+  },
+  resetButton: {
+    backgroundColor: '#FF9800',
+    marginBottom: 30,
+  },
+  disabledButton: {
+    backgroundColor: '#CCCCCC',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  controlButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  disabledButtonText: {
+    color: '#999999',
   },
 });
 

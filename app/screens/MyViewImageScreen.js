@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { StyleSheet, View, Image, Text, TouchableOpacity, ImageBackground, Dimensions, SafeAreaView, TouchableWithoutFeedback } from "react-native";
+import { StyleSheet, View, Image, Text, TouchableOpacity, ImageBackground, Dimensions, SafeAreaView, TouchableWithoutFeedback, StatusBar } from "react-native";
 
 const { height, width } = Dimensions.get("window");
 
@@ -39,6 +39,7 @@ function MyViewImageScreen({ navigation, route }) {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <StatusBar backgroundColor="#eb11ee" barStyle="light-content" />
       <View style={styles.container}>
         {/* Hamburger Menu Button - Only show when menu is closed */}
         {!isMenuOpen && (
@@ -67,32 +68,38 @@ function MyViewImageScreen({ navigation, route }) {
                 <Text style={styles.closeButtonText}>×</Text>
               </TouchableOpacity>
             </View>
-            
+
             <View style={styles.MenuContent}>
-              <TouchableOpacity 
-                style={styles.MenuItem} 
+              <TouchableOpacity
+                style={styles.MenuItem}
                 onPress={closeMenu}
               >
                 <Text style={styles.MenuText}>🏠 Home</Text>
               </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={styles.MenuItem} 
+
+              <TouchableOpacity
+                style={styles.MenuItem}
                 onPress={() => handleMenuPress("Snapshare")}
               >
                 <Text style={styles.MenuText}>📸 Snap & Share</Text>
               </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={styles.MenuItem} 
-                onPress={() => handleMenuPress("Gallery")}
+
+              <TouchableOpacity
+                style={styles.MenuItem}
+                onPress={() => {
+                  setIsMenuOpen(false);
+                  navigation.navigate("Gallery", { viewMode: 'private' });
+                }}
               >
                 <Text style={styles.MenuText}>🖼️ My Posts</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity 
-                style={styles.MenuItem} 
-                onPress={() => handleMenuPress("Gallery")}
+              <TouchableOpacity
+                style={styles.MenuItem}
+                onPress={() => {
+                  setIsMenuOpen(false);
+                  navigation.navigate("Gallery", { viewMode: 'public' });
+                }}
               >
                 <Text style={styles.MenuText}>👥 Community</Text>
               </TouchableOpacity>
@@ -105,14 +112,14 @@ function MyViewImageScreen({ navigation, route }) {
           <Image
             resizeMode="cover"
             style={styles.rackImage}
-            source={require("../assets/rack.webp")}
+            source={require("../../assets/rack.webp")}
           />
         </View>
 
         <View style={styles.middleContainer}>
           <ImageBackground
             style={styles.background}
-            source={require("../assets/plaintabletop.jpg")}
+            source={require("../../assets/plaintabletop.jpg")}
             resizeMode="cover"
           >
             <View style={styles.content}>
@@ -145,7 +152,7 @@ function MyViewImageScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#eb11ee",
   },
   container: {
     flex: 1,

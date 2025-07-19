@@ -136,8 +136,8 @@ function PRecipeSearch({ navigation }) {
                         {t === "<30"
                           ? "Less than 30 mins"
                           : t === "30-60"
-                          ? "30-60 mins"
-                          : "More than 1 hour"}
+                            ? "30-60 mins"
+                            : "More than 1 hour"}
                       </Text>
                     </TouchableOpacity>
                   ))}

@@ -1,188 +1,222 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, View, Image, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, SafeAreaView, Dimensions } from "react-native";
-import { db } from '../config/FirebaseConfig';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { StyleSheet, View, Image, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, SafeAreaView, ScrollView, KeyboardAvoidingView, Platform, Dimensions, StatusBar } from "react-native";
+import { auth, db } from "../config/FirebaseConfig";
+import { Picker } from "@react-native-picker/picker";
+import {
+  collection,
+  addDoc,
+  serverTimestamp
+} from "firebase/firestore";
+import * as FileSystem from 'expo-file-system';
+import * as ImageManipulator from 'expo-image-manipulator';
 
-const { width, height } = Dimensions.get('window');
+const { width, height } = Dimensions.get("window");
 
 function Snapsharescreen({ navigation, route }) {
-    const [title, setTitle] = useState('');
-    const [caption, setCaption] = useState('');
-    const [imageUri, setImageUri] = useState(null);
-    const [isUploading, setIsUploading] = useState(false);
+  const [title, setTitle] = useState("");
+  const [caption, setCaption] = useState("");
+  const [imageUri, setImageUri] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [privacy, setPrivacy] = useState("private");
 
-    useEffect(() => {
-        if (route.params?.imageUri) {
-            setImageUri(route.params.imageUri);
-        }
-    }, [route.params?.imageUri]);
-
-    const handleSnapPicture = () => {
-        navigation.navigate('CameraScreen');
-    };
-
-    const compressImageCanvas = (imageUri, quality = 0.7, maxWidth = 800, maxHeight = 600) => {
-    return new Promise((resolve, reject) => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        const img = new Image();
-
-        img.onload = () => {
-            let { width, height } = img;
-
-            if (width > height && width > maxWidth) {
-                height = (height * maxWidth) / width;
-                width = maxWidth;
-            } else if (height > maxHeight) {
-                width = (width * maxHeight) / height;
-                height = maxHeight;
-            }
-
-            canvas.width = width;
-            canvas.height = height;
-            ctx.drawImage(img, 0, 0, width, height);
-
-            resolve(canvas.toDataURL('image/jpeg', quality));
-        };
-
-        img.onerror = () => reject(new Error('Failed to load image'));
-        img.src = imageUri;
-    });
-};
-
-const handleUploadPost = async () => {
-    if (!imageUri || !title.trim() || !caption.trim()) {
-        Alert.alert('Error', 'Please fill in all fields and take a picture!');
-        return;
+  useEffect(() => {
+    if (route.params?.imageUri) {
+      setImageUri(route.params.imageUri);
     }
+  }, [route.params?.imageUri]);
 
-    setIsUploading(true);
+  const handleSnapPicture = () => navigation.navigate("CameraScreen");
 
+  const convertImageToBase64 = async (uri) => {
     try {
-        const response = await fetch(imageUri);
-        const blob = await response.blob();
+      const compressedImage = await ImageManipulator.manipulateAsync(
+        uri,
+        [{ resize: { width: 800 } }],
+        { compress: 0.3, format: ImageManipulator.SaveFormat.JPEG }
+      );
 
-        if (blob.size > 1500000) {
-            Alert.alert('Image Too Large', 'Please take another image. The current image is too large to upload.', [
-                { text: 'OK' }
-            ]);
-            return;
-        }
+      const base64 = await FileSystem.readAsStringAsync(compressedImage.uri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      console.log(`Image size after compression: ${base64.length} bytes`);
 
-        let base64 = await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result);
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-        });
+      if (base64.length > 800000) {
+        const superCompressed = await ImageManipulator.manipulateAsync(
+          compressedImage.uri,
+          [{ resize: { width: 600 } }],
+          { compress: 0.2, format: ImageManipulator.SaveFormat.JPEG }
+        );
+        const finalBase64 = await FileSystem.readAsStringAsync(
+          superCompressed.uri,
+          { encoding: FileSystem.EncodingType.Base64 }
+        );
+        console.log(`Final compressed size: ${finalBase64.length} bytes`);
+        return `data:image/jpeg;base64,${finalBase64}`;
+      }
 
-        let base64Size = base64.length * 0.75;
-
-        const postData = {
-            title: title.trim(),
-            caption: caption.trim(),
-            imageBase64: base64,
-            createdAt: serverTimestamp(),
-            timestamp: Date.now(),
-        };
-
-        await addDoc(collection(db, 'posts'), postData);
-
-        Alert.alert('Success!', 'Your post has been uploaded successfully!', [
-            {
-                text: 'OK',
-                onPress: () => {
-                    setTitle('');
-                    setCaption('');
-                    setImageUri(null);
-                }
-            }
-        ]);
+      return `data:image/jpeg;base64,${base64}`;
     } catch (error) {
-        Alert.alert('Upload Error', 'Failed to upload post. Please try again.');
-    } finally {
-        setIsUploading(false);
+      console.error("Compression error:", error);
+      throw new Error("Failed to process image");
     }
-};
+  };
 
+  const handleUploadPost = async () => {
+    if (!imageUri || !title.trim() || !caption.trim()) {
+      Alert.alert("Error", "Please fill in all fields and take a picture!");
+      return;
+    }
+    setIsUploading(true);
+    try {
+      const user = auth.currentUser;
+      if (!user) throw new Error("Not signed in");
 
-    return (
-    <SafeAreaView style={styles.container}>
+      const base64Image = await convertImageToBase64(imageUri);
+      const postData = {
+        ownerId: user.uid,
+        privacy,
+        title: title.trim(),
+        caption: caption.trim(),
+        imageData: base64Image,
+        createdAt: serverTimestamp(),
+        timestamp: Date.now(),
+      };
+      await addDoc(collection(db, "posts"), postData);
+
+      Alert.alert("Success!", "Your post has been uploaded!", [
+        {
+          text: "OK",
+          onPress: () => {
+            setTitle("");
+            setCaption("");
+            setImageUri(null);
+            navigation.navigate("Gallery");
+          },
+        },
+      ]);
+    } catch (err) {
+      console.error("Upload Error:", err);
+      Alert.alert("Upload Error", err.message || "Failed to upload post");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      {/* make status bar pink with light text */}
+      <StatusBar backgroundColor="#eb11ee" barStyle="light-content" />
+
+      {/* pink header */}
       <View style={styles.topContainer}>
         <Text style={styles.heading}>Snap & Share</Text>
-
         <TouchableOpacity
           style={styles.galleryButton}
           onPress={() => navigation.navigate("Gallery")}
         >
-        <Text style={styles.galleryButtonText}>Gallery</Text>
+          <Text style={styles.galleryButtonText}>Gallery</Text>
         </TouchableOpacity>
       </View>
 
-      {imageUri && <Image source={{ uri: imageUri }} style={styles.previewImage} />}
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <ScrollView
+          style={styles.body}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          {imageUri && (
+            <Image source={{ uri: imageUri }} style={styles.previewImage} />
+          )}
 
-      <View style={styles.secondContainer}>
-        <View style={styles.titleBox}>
-          <TextInput
-            style={styles.textInput}
-            placeholder="Add title here"
-            placeholderTextColor="#999"
-            value={title}
-            onChangeText={(text) => setTitle(text)}
-          />
-        </View>
-
-        <View style={styles.captionBox}>
-          <TextInput
-            style={styles.textInput}
-            placeholder="Add description here"
-            placeholderTextColor="#999"
-            value={caption}
-            onChangeText={(text) => setCaption(text)}
-            multiline
-          />
-        </View>
-      </View>
-
-      <TouchableOpacity onPress={handleSnapPicture} disabled={isUploading}>
-        <View style={[styles.firstBox, isUploading && styles.disabledBox]}>
-          <View style={styles.iconRow}>
-            <Text style={styles.actionText}>Snap Picture</Text>
-            <Image source={require("../assets/camera-icon.png")} style={styles.iconImage} />
+          <View style={styles.secondContainer}>
+            <View style={styles.titleBox}>
+              <TextInput
+                style={styles.textInput}
+                placeholder="Add title here"
+                placeholderTextColor="#999"
+                value={title}
+                onChangeText={setTitle}
+              />
+            </View>
+            <View style={styles.captionBox}>
+              <TextInput
+                style={styles.textInput}
+                placeholder="Add description here"
+                placeholderTextColor="#999"
+                value={caption}
+                onChangeText={setCaption}
+                multiline
+              />
+            </View>
+            <Text style={styles.label}>Who can view this image?</Text>
+            <View style={styles.pickerContainer}>
+              <Picker selectedValue={privacy} onValueChange={setPrivacy}>
+                <Picker.Item label="Only You" value="private" />
+                <Picker.Item label="Public" value="public" />
+              </Picker>
+            </View>
           </View>
-        </View>
-      </TouchableOpacity>
 
-      <TouchableOpacity onPress={handleUploadPost} disabled={isUploading || !imageUri}>
-        <View style={[styles.secondBox, (isUploading || !imageUri) && styles.disabledBox]}>
-          <View style={styles.iconRow}>
-            {isUploading ? (
-              <>
-                <ActivityIndicator size="small" color="#000" style={{ marginRight: 10 }} />
-                <Text style={styles.actionText}>Uploading...</Text>
-              </>
-            ) : (
-              <>
-                <Text style={styles.actionText}>Upload Post</Text>
-                <Image source={require("../assets/share-icon.png")} style={styles.iconImage} />
-              </>
-            )}
-          </View>
-        </View>
-      </TouchableOpacity>
+          <TouchableOpacity onPress={handleSnapPicture} disabled={isUploading}>
+            <View style={[styles.firstBox, isUploading && styles.disabledBox]}>
+              <View style={styles.iconRow}>
+                <Text style={styles.actionText}>Snap Picture</Text>
+                <Image
+                  source={require("../../assets/camera-icon.png")}
+                  style={styles.iconImage}
+                />
+              </View>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={handleUploadPost}
+            disabled={isUploading || !imageUri}
+          >
+            <View style={[styles.secondBox, (isUploading || !imageUri) && styles.disabledBox]}>
+              <View style={styles.iconRow}>
+                {isUploading ? (
+                  <>
+                    <ActivityIndicator size="small" color="#000" style={{ marginRight: 10 }} />
+                    <Text style={styles.actionText}>Uploading...</Text>
+                  </>
+                ) : (
+                  <>
+                    <Text style={styles.actionText}>Upload Post</Text>
+                    <Image
+                      source={require("../../assets/share-icon.png")}
+                      style={styles.iconImage}
+                    />
+                  </>
+                )}
+              </View>
+            </View>
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#eb11ee",
+  },
   container: {
     flex: 1,
     alignItems: "center",
+  },
+  body: {
+    flex: 1,
+    width: "100%",
     backgroundColor: "#fff",
   },
   topContainer: {
     width: "100%",
-    paddingHorizontal: width * 0.02,
     paddingTop: height * 0.05,
     height: height * 0.1,
     justifyContent: "flex-end",
@@ -233,6 +267,20 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: "#000",
   },
+  label: {
+    alignSelf: "flex-start",
+    marginLeft: 16,
+    fontWeight: "600",
+    marginTop: 12,
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    overflow: "hidden",
+    width: "90%",
+    marginBottom: 24,
+  },
   firstBox: {
     width: width * 0.9,
     padding: height * 0.0075,
@@ -272,6 +320,10 @@ const styles = StyleSheet.create({
   },
   disabledBox: {
     opacity: 0.6,
+  },
+  scrollContent: {
+    paddingBottom: 40,
+    alignItems: "center",
   },
 });
 
