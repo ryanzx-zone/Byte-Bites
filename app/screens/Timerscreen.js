@@ -306,7 +306,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 0,
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
     paddingVertical: 25,
     paddingHorizontal: 15,
     shadowColor: '#000',
@@ -330,6 +329,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     paddingTop: 10,
     paddingBottom: 20,
+    backgroundColor: '#FFFFFF',
   },
   controlButton: {
     paddingVertical: 18,
