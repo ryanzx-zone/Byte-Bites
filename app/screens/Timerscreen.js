@@ -57,7 +57,7 @@ const Timerscreen = () => {
 
     if (isRunning && reminderType && reminderInterval) {
       reminderRef.current = setInterval(() => {
-        Vibration.vibrate(500);
+        Vibration.vibrate(2000);
         Alert.alert('Reminder', `Time to ${reminderType}!`);
       }, reminderInterval * 1000);
     }
