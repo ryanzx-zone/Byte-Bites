@@ -57,7 +57,7 @@ const Timerscreen = () => {
 
     if (isRunning && reminderType && reminderInterval) {
       reminderRef.current = setInterval(() => {
-        Vibration.vibrate(500);
+        Vibration.vibrate(2000);
         Alert.alert('Reminder', `Time to ${reminderType}!`);
       }, reminderInterval * 1000);
     }
@@ -239,14 +239,14 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#eb11ee',
     paddingHorizontal: width * 0.05,
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0,
-    paddingBottom: 20,
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 20,
     justifyContent: 'flex-end',
   },
   headerText: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: 'bold',
     color: '#FFFFFF',
+
   },
   keyboardAvoidingView: {
     flex: 1,
@@ -306,7 +306,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 0,
     backgroundColor: '#FFFFFF',
-    paddingVertical: 25,
+    paddingVertical: 35,
     paddingHorizontal: 15,
     shadowColor: '#000',
     shadowOffset: {

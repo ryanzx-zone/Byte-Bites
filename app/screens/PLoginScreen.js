@@ -90,6 +90,7 @@ const styles = StyleSheet.create({
     width: '100%',
     marginBottom: height * 0.02,
     borderRadius: 5,
+    color: '#000',
   },
   button: {
     padding: height * 0.015,

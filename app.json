@@ -2,13 +2,14 @@
   "expo": {
     "name": "KitchenGPT",
     "slug": "KitchenGPT",
+    "description": "Your very own recipe app!",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/Byte-bites-logo.jpg",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/KitchenGPT.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -31,6 +32,10 @@
         "projectId": "900e0456-a08b-4969-bb8b-0e4106dcef9d"
       }
     },
-    "owner": "ryanzzzx"
+    "owner": "ryanzzzx",
+    "runtimeVersion": "1.0.0",
+    "updates": {
+      "url": "https://u.expo.dev/900e0456-a08b-4969-bb8b-0e4106dcef9d"
+    }
   }
 }

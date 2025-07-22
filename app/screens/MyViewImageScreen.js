@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { StyleSheet, View, Image, Text, TouchableOpacity, ImageBackground, Dimensions, SafeAreaView, TouchableWithoutFeedback, StatusBar } from "react-native";
+import { StyleSheet, View, Image, Text, TouchableOpacity, ImageBackground, Dimensions, SafeAreaView, TouchableWithoutFeedback, } from "react-native";
 
 const { height, width } = Dimensions.get("window");
 
@@ -39,9 +39,7 @@ function MyViewImageScreen({ navigation, route }) {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar backgroundColor="#eb11ee" barStyle="light-content" />
       <View style={styles.container}>
-        {/* Hamburger Menu Button - Only show when menu is closed */}
         {!isMenuOpen && (
           <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
             <View style={styles.menuButtonBackground}>
@@ -52,14 +50,12 @@ function MyViewImageScreen({ navigation, route }) {
           </TouchableOpacity>
         )}
 
-        {/* Overlay */}
         {isMenuOpen && (
           <TouchableWithoutFeedback onPress={closeMenu}>
             <View style={styles.overlay} />
           </TouchableWithoutFeedback>
         )}
 
-        {/* Side Navigation */}
         {isMenuOpen && (
           <View style={styles.sideMenu}>
             <View style={styles.sideMenuHeader}>
@@ -107,7 +103,6 @@ function MyViewImageScreen({ navigation, route }) {
           </View>
         )}
 
-        {/* Main Content */}
         <View style={styles.topContainer}>
           <Image
             resizeMode="cover"
