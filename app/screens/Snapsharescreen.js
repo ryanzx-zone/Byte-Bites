@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, View, Image, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, SafeAreaView, ScrollView, KeyboardAvoidingView, Platform, Dimensions, StatusBar } from "react-native";
+import { StyleSheet, View, Image, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, SafeAreaView, ScrollView, KeyboardAvoidingView, Platform, Dimensions, } from "react-native";
 import { auth, db } from "../config/FirebaseConfig";
 import { Picker } from "@react-native-picker/picker";
 import {
@@ -104,10 +104,6 @@ function Snapsharescreen({ navigation, route }) {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* make status bar pink with light text */}
-      <StatusBar backgroundColor="#eb11ee" barStyle="light-content" />
-
-      {/* pink header */}
       <View style={styles.topContainer}>
         <Text style={styles.heading}>Snap & Share</Text>
         <TouchableOpacity
@@ -151,9 +147,14 @@ function Snapsharescreen({ navigation, route }) {
                 multiline
               />
             </View>
-            <Text style={styles.label}>Who can view this image?</Text>
+            <Text style={styles.label}>Who can view this post?</Text>
             <View style={styles.pickerContainer}>
-              <Picker selectedValue={privacy} onValueChange={setPrivacy}>
+              <Picker
+                style={styles.picker}
+                dropdownIconColor="#000"
+                selectedValue={privacy}
+                onValueChange={setPrivacy}
+              >
                 <Picker.Item label="Only You" value="private" />
                 <Picker.Item label="Public" value="public" />
               </Picker>
@@ -280,6 +281,11 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     width: "90%",
     marginBottom: 24,
+  },
+  picker: {
+    color: "#000",
+    width: "100%",
+    height: 50,
   },
   firstBox: {
     width: width * 0.9,
