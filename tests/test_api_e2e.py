@@ -1,5 +1,8 @@
 import os
-os.environ["SPOONACULAR_API_KEY"] = "test_key"
+
+RUN_LIVE = os.environ.get("RUN_LIVE_TESTS", "") == "1"
+if not RUN_LIVE:
+    os.environ["SPOONACULAR_API_KEY"] = "test_key"
 
 import pytest
 from backend.app import app
@@ -109,3 +112,13 @@ def test_search_single_ingredient(monkeypatch, client):
     data = res.get_json()
     assert len(data["results"]) == 1
     assert data["results"][0]["title"] == "Hearty Soup"
+
+@pytest.mark.skipif(not RUN_LIVE, reason="Skipping live Spoonacular API tests")
+def test_live_search_smoke(client):
+    """Real network call through your Flask endpoint → Spoonacular → back."""
+    res = client.get("/recipes/search?q=chicken")
+    assert res.status_code == 200, f"Expected 200, got {res.status_code}"
+    data = res.get_json()
+    assert isinstance(data.get("results"), list) and len(data["results"]) > 0
+    first = data["results"][0]
+    assert "id" in first and "title" in first and "nutrition" in first
