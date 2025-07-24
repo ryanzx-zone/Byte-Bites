@@ -61,11 +61,11 @@ const styles = StyleSheet.create({
       alignItems: "center",
     },
     heading: {
-      fontSize: 26,          
+      fontSize: 28,          
       fontWeight: 'bold',  
     },
     italicText: {
-      fontSize: 22,
+      fontSize: 24,
       fontStyle: 'italic',    
     },
     logo:{
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
       paddingHorizontal: width * 0.03,
     },
     textInput: {
-      fontSize: 15,
+      fontSize: 18,
       width: width * 0.8,
       height: height * 0.065,
       borderRadius: 10,
@@ -100,8 +100,8 @@ const styles = StyleSheet.create({
     },
     buttonContainer: {
       justifyContent: 'center',  
-      height: height * 0.085,              
-      marginTop: height * 0.02,
+      height: height * 0.065,              
+      marginTop: height * 0.01,
     },
 });
 
