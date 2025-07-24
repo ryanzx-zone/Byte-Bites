@@ -176,3 +176,14 @@ def test_search_timeout(monkeypatch, client):
     res = client.get('/recipes/search?q=test')
     assert res.status_code == 500
     assert res.get_json().get('error') == 'Spoonacular request failed'
+
+# 11: Live smoke test for Spoonacular
+@pytest.mark.skipif(not RUN_LIVE, reason="Skipping live Spoonacular API tests")
+def test_live_search_smoke(client):
+    "A real network call through the flask endpoint -> Spoonacular -> back"
+    res = client.get("/recipes/search?q=chicken")
+    assert res.status_code == 200, f"Expected 200, got {res.status_code}"
+    data = res.get_json()
+    assert isinstance(data.get("results"), list) and len(data["results"]) > 0
+    first = data["results"][0]
+    assert "id" in first and "title" in first and "nutrition" in first
