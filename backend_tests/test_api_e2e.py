@@ -187,3 +187,56 @@ def test_live_search_smoke(client):
     assert isinstance(data.get("results"), list) and len(data["results"]) > 0
     first = data["results"][0]
     assert "id" in first and "title" in first and "nutrition" in first
+      
+# 12: Malformed preparation time filter is ignored
+def test_cook_time_malformed(monkeypatch, client):
+    captured = {}
+    def fake_get(url, params=None, timeout=None):
+        captured['params'] = params or {}
+        return DummyResponse({'results': []})
+    monkeypatch.setattr('requests.get', fake_get)
+    res = client.get('/recipes/search?q=test&cook_time=bad-val')
+    assert res.status_code == 200
+    assert 'minReadyTime' not in captured['params']
+    assert 'maxReadyTime' not in captured['params']
+
+# 13: Malformed dietary filter is ignored
+def test_diet_malformed(monkeypatch, client):
+    captured = {}
+    def fake_get(url, params=None, timeout=None):
+        captured['params'] = params or {}
+        return DummyResponse({'results': []})
+    monkeypatch.setattr('requests.get', fake_get)
+    res = client.get('/recipes/search?q=test&dietary=foo,bar')
+    assert res.status_code == 200
+    assert 'diet' not in captured['params']
+
+# 14: Empty cuisines param is ignored
+def test_cuisines_empty(monkeypatch, client):
+    captured = {}
+    def fake_get(url, params=None, timeout=None):
+        captured['params'] = params or {}
+        return DummyResponse({'results': []})
+    monkeypatch.setattr('requests.get', fake_get)
+    res = client.get('/recipes/search?q=test')
+    assert res.status_code == 200
+    assert 'cuisine' not in captured['params']
+
+# 15: Combined filters spot‑check
+def test_combined_filters(monkeypatch, client):
+    captured = {}
+    def fake_get(url, params=None, timeout=None):
+        captured['params'] = params or {}
+        return DummyResponse({'results': []})
+    monkeypatch.setattr('requests.get', fake_get)
+    res = client.get(
+        '/recipes/search?q=test'
+        '&cook_time=30-60'
+        '&dietary=keto'
+        '&cuisines=western'
+    )
+    assert res.status_code == 200
+    p = captured['params']
+    assert p['minReadyTime'] == 30 and p['maxReadyTime'] == 60
+    assert p['diet'] == 'keto'
+    assert p['cuisine'] == 'western'
